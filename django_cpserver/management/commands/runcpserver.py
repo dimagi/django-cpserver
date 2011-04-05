@@ -25,6 +25,7 @@ Optional CherryPy server settings: (setting=value)
   threads=NUMBER        Number of threads for server to use
   ssl_certificate=FILE  SSL certificate file
   ssl_private_key=FILE  SSL private key file
+  ssl_certificate_chain=FILE	SSL root CA certificate file
   server_user=STRING    user to run daemonized process
                         Defaults to www-data
   server_group=STRING   group to daemonized process
@@ -54,6 +55,7 @@ CPSERVER_OPTIONS = {
 'server_group': 'www-data',
 'ssl_certificate': None,
 'ssl_private_key': None,
+'ssl_certificate_chain': None,
 }
 
 
@@ -162,6 +164,8 @@ def start_server(options):
     if options['ssl_certificate'] and options['ssl_private_key']:
         server.ssl_certificate = options['ssl_certificate']
         server.ssl_private_key = options['ssl_private_key']  
+        if options['ssl_certificate_chain']:
+            server.ssl_certificate_chain = options['ssl_certificate_chain']
     try:
         server.start()
     except KeyboardInterrupt:
