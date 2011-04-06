@@ -154,6 +154,13 @@ def start_server(options):
         change_uid_gid(options['server_user'], options['server_group'])
     
     from cherrypy.wsgiserver import CherryPyWSGIServer as Server
+
+    import logging
+    try:
+        #use the openssl adapter if available
+        from cherrypy.wsgiserver.ssl_pyopenssl import pyOpenSSLAdapter as sslAdapter
+    except ImportError:
+        from cherrypy.wsgiserver.ssl_builtin import BuiltinSSLAdapter as sslAdapter
     from django.core.handlers.wsgi import WSGIHandler
     server = Server(
         (options['host'], int(options['port'])),
@@ -162,10 +169,11 @@ def start_server(options):
         options['server_name']
     )
     if options['ssl_certificate'] and options['ssl_private_key']:
-        server.ssl_certificate = options['ssl_certificate']
-        server.ssl_private_key = options['ssl_private_key']  
         if options['ssl_certificate_chain']:
-            server.ssl_certificate_chain = options['ssl_certificate_chain']
+            chain = options['ssl_certificate_chain']
+        else:
+            chain = None
+        server.ssl_adapter = sslAdapter(options['ssl_certificate'], options['ssl_private_key'], certificate_chain=chain)
     try:
         server.start()
     except KeyboardInterrupt:
