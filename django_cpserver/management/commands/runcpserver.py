@@ -3,6 +3,7 @@
 import logging, sys, os, signal, time, errno
 from socket import gethostname
 from django.core.management.base import BaseCommand
+import cherrypy
 
 
 CPSERVER_HELP = r"""
@@ -154,13 +155,6 @@ def start_server(options):
         change_uid_gid(options['server_user'], options['server_group'])
     
     from cherrypy.wsgiserver import CherryPyWSGIServer as Server
-
-    import logging
-    try:
-        #use the openssl adapter if available
-        from cherrypy.wsgiserver.ssl_pyopenssl import pyOpenSSLAdapter as sslAdapter
-    except ImportError:
-        from cherrypy.wsgiserver.ssl_builtin import BuiltinSSLAdapter as sslAdapter
     from django.core.handlers.wsgi import WSGIHandler
     server = Server(
         (options['host'], int(options['port'])),
@@ -168,12 +162,27 @@ def start_server(options):
         int(options['threads']), 
         options['server_name']
     )
-    if options['ssl_certificate'] and options['ssl_private_key']:
+
+    if cherrypy.__version__ >= '3.2.0':
+        #3.2 and beyond usage of ssl_adapter
+        try:
+            #use the openssl adapter if available
+            from cherrypy.wsgiserver.ssl_pyopenssl import pyOpenSSLAdapter as sslAdapter
+        except ImportError:
+            from cherrypy.wsgiserver.ssl_builtin import BuiltinSSLAdapter as sslAdapter
+        if options['ssl_certificate'] and options['ssl_private_key']:
+            if options['ssl_certificate_chain']:
+                chain = options['ssl_certificate_chain']
+            else:
+                chain = None
+            server.ssl_adapter = sslAdapter(options['ssl_certificate'], options['ssl_private_key'], certificate_chain=chain)
+    else:
+        #legacy older ssl setup method
+        server.ssl_certificate = options['ssl_certificate']
+        server.ssl_private_key = options['ssl_private_key']  
         if options['ssl_certificate_chain']:
-            chain = options['ssl_certificate_chain']
-        else:
-            chain = None
-        server.ssl_adapter = sslAdapter(options['ssl_certificate'], options['ssl_private_key'], certificate_chain=chain)
+            server.ssl_certificate_chain = options['ssl_certificate_chain']  
+
     try:
         server.start()
     except KeyboardInterrupt:
