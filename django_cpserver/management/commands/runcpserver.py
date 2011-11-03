@@ -24,6 +24,7 @@ Optional CherryPy server settings: (setting=value)
   pidfile=FILE          write the spawned process-id to this file
   workdir=DIRECTORY     change to this directory when daemonizing
   threads=NUMBER        Number of threads for server to use
+  timeout=NUMBER        Timeout (in seconds) for accepted connections
   ssl_certificate=FILE  SSL certificate file
   ssl_private_key=FILE  SSL private key file
   ssl_certificate_chain=FILE	SSL root CA certificate file
@@ -49,6 +50,7 @@ CPSERVER_OPTIONS = {
 'port': 8088,
 'server_name': 'localhost',
 'threads': 10, 
+'timeout': 10, 
 'daemonize': False,
 'workdir': None,
 'pidfile': None,
