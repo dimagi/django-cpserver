@@ -163,7 +163,7 @@ def start_server(options):
         WSGIHandler(), 
         int(options['threads']), 
         options['server_name'],
-        timeout=options['timeout']
+        timeout=int(options['timeout'])
     )
 
     if cherrypy.__version__ >= '3.2.0':
